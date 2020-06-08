@@ -1,0 +1,55 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+      docker: 18
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - mvn -Dmaven.test.skip=true clean package
+      - IMAGE_TAG=${CODEBUILD_BUILD_NUMBER}
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - echo Writing image definitions file...
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      
+      - echo "Create imageDetail.json for Blue/Green deployment"
+      - IMAGE_URI=`docker inspect --format='{{index .RepoDigests 0}}' $REPOSITORY_URI:$IMAGE_TAG`
+      - echo "{\"ImageURI\":\"$IMAGE_URI\"}" > imageDetail.json
+      - printf '{"ImageURI":"%s"}' $REPOSITORY_URI:$IMAGE_TAG > imageDetail.json
+
+      - echo "Create taskdef.json"
+      - echo "{\"executionRoleArn\":\"${ECS_TASK_EXECUTION_ROLE}\",\"containerDefinitions\":[{\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/$CONTAINER_NAME\",\"awslogs-region\":\"$AWS_DEFAULT_REGION\",\"awslogs-stream-prefix\":\"ecs\"}},\"portMappings\":[{\"hostPort\":$NODE_PORT,\"protocol\":\"tcp\",\"containerPort\":$CONTAINER_PORT}],\"image\":\"<IMAGE_NAME>\",\"essential\":true,\"name\":\"$CONTAINER_NAME\"}],\"memory\":512,\"compatibilities\":[\"EC2\"],\"family\":\"$TASK_NAME\",\"requiresCompatibilities\":[\"EC2\"],\"networkMode\":\"awsvpc\",\"cpu\":256}" > taskdef.json
+
+      - echo "Create appspec.yaml"
+      - SOURCE_DIR=$(echo `pwd`)
+      - cd ${SOURCE_DIR}/scripts
+      - chmod +x ./gen_ecs_ec2_appspec
+      - /bin/bash ./gen_ecs_ec2_appspec $CONTAINER_NAME $CONTAINER_PORT $SOURCE_DIR
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
+
+artifacts:
+    files: 
+      - imagedefinitions.json
+      - imageDetail.json
+      - taskdef.json
+      - appspec.yaml
+    discard-paths: yes
