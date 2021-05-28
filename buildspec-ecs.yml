@@ -9,7 +9,8 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URL
+      - REPOSITORY_URI=$REPOSITORY_URL/$IMAGE_REPO_NAME
   build:
     commands:
       - echo Build started on `date`
@@ -34,7 +35,7 @@ phases:
       - printf '{"ImageURI":"%s"}' $REPOSITORY_URI:$IMAGE_TAG > imageDetail.json
 
       - echo "Create taskdef.json"
-      - echo "{\"executionRoleArn\":\"${ECS_TASK_EXECUTION_ROLE}\",\"containerDefinitions\":[{\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/$CONTAINER_NAME\",\"awslogs-region\":\"$AWS_DEFAULT_REGION\",\"awslogs-stream-prefix\":\"ecs\"}},\"portMappings\":[{\"hostPort\":$NODE_PORT,\"protocol\":\"tcp\",\"containerPort\":$CONTAINER_PORT}],\"image\":\"<IMAGE_NAME>\",\"essential\":true,\"name\":\"$CONTAINER_NAME\"}],\"memory\":512,\"compatibilities\":[\"EC2\"],\"family\":\"$TASK_NAME\",\"requiresCompatibilities\":[\"EC2\"],\"networkMode\":\"awsvpc\",\"cpu\":256}" > taskdef.json
+      - echo "{\"executionRoleArn\":\"${ECS_TASK_EXECUTION_ROLE}\",\"containerDefinitions\":[{\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-create-group\":\"true\",\"awslogs-group\":\"/ecs/$CONTAINER_NAME\",\"awslogs-region\":\"$AWS_DEFAULT_REGION\",\"awslogs-stream-prefix\":\"ecs\"}},\"portMappings\":[{\"hostPort\":$NODE_PORT,\"protocol\":\"tcp\",\"containerPort\":$CONTAINER_PORT}],\"image\":\"<IMAGE_NAME>\",\"essential\":true,\"name\":\"$CONTAINER_NAME\"}],\"memory\":\"512\",\"compatibilities\":[\"EC2\"],\"family\":\"$TASK_NAME\",\"requiresCompatibilities\":[\"EC2\"],\"networkMode\":\"awsvpc\",\"cpu\":\"256\"}" > taskdef.json
 
       - echo "Create appspec.yaml"
       - SOURCE_DIR=$(echo `pwd`)
