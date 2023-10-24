@@ -8,15 +8,15 @@ import java.net.URL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ControllerIntegrationTest {
+class ControllerIntegrationTest {
 
-	@LocalServerPort
+	@Value("${local.server.port}")
 	private int port;
 
 	private URL base;
@@ -27,12 +27,12 @@ public class ControllerIntegrationTest {
 	private TestRestTemplate template;
 
 	@BeforeEach
-	public void setUp() throws Exception {
+	void setUp() throws Exception {
 		this.base = new URL("http://localhost:" + port + "?name=" + dummyName);
 	}
 
 	@Test
-	public void getHello() throws Exception {
+	void getHello() throws Exception {
 		final ResponseEntity<String> response = template.getForEntity(base.toString(), String.class);
 		assertThat(response.getBody(), equalTo("Hi " + dummyName + "!!"));
 	}

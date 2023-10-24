@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class HelloControllerTest {
+class HelloControllerTest {
 
 	@Autowired
 	private MockMvc mvc;
@@ -22,13 +22,13 @@ public class HelloControllerTest {
 	private final String value = "foo";
 
 	@Test
-	public void testHiClientError() throws Exception {
+	void testHiClientError() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get("/").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().is4xxClientError());
 	}
 
 	@Test
-	public void testHi() throws Exception {
+	void testHi() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get("/").param("name", value).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().string(equalTo("Hi " + value + "!!")));
 	}

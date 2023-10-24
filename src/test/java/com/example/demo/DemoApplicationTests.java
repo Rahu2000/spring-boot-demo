@@ -6,15 +6,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 // @RunWith(SpringRunner.class)
 @SpringBootTest
-public class DemoApplicationTests {
+class DemoApplicationTests {
 
 	@Test
-	public void contextLoads() {
+	void contextLoads() {
 		assertTrue(true, "contextLoads");
 	}
 
 	@Test
-	public void applicationContextTest() {
+	void applicationContextTest() {
 		DemoApplication.main(new String[] {});
 		assertTrue(true, "applicationContextTest");
 	}

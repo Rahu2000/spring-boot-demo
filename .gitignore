@@ -5,6 +5,7 @@ HELP.md
 ### STS ###
 .apt_generated
 .classpath
+.dccache
 .factorypath
 .project
 .settings
@@ -27,3 +28,7 @@ HELP.md
 
 ### VS Code ###
 .vscode/
+
+### Linter ###
+hadolint
+lint_*

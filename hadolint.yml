@@ -1,0 +1,16 @@
+# See https://github.com/hadolint/hadolint
+# Failure-threshold example
+failure-threshold: warning
+
+# Ignored example
+ignored:
+  - DL3000
+
+# Override example
+override:
+  error:
+    - DL3001
+
+# TrustedRegistries example
+trustedRegistries:
+  - hub.docker.com
