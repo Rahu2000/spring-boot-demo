@@ -1,0 +1,40 @@
+version: 0.2
+
+env:
+  variables:
+    LINTER: $LINTER
+    LINTER_VERSION: $LINTER_VERSION
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+
+  pre_build:
+    commands:
+      - |
+        # Check existing linter
+        LINTER=`hadolint --version 2>/dev/null`
+        # Set linter version
+        if [ -z "$LINTER_VERSION" ]; then
+          LINTER_VERSION="v2.12.0"
+        fi
+        if [ -z "$LINTER" ]; then
+          wget -cO - https://github.com/hadolint/hadolint/releases/download/${LINTER_VERSION}/hadolint-Linux-x86_64 > hadolint
+          chmod +x hadolint
+        fi
+      # - echo "Copying hadolint.yml to the application directory"
+      # - cp hadolint.yml $CODEBUILD_SRC_DIR_AppSource/hadolint.yml
+      # - echo "Switching to the application directory"
+      # - cd $CODEBUILD_SRC_DIR_AppSource
+      # - echo "Pulling the hadolint docker image"
+      # - docker pull hadolint/hadolint:v1.16.2
+
+  build:
+    commands:
+      - ./hadolint ./Dockerfile -f json > lint_result.json
+
+  post_build:
+    on-failure: CONTINUE
+    commands:
+      - cat ./lint_result.json | jq .
