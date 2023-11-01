@@ -31,7 +31,7 @@ phases:
   post_build:
     commands:
       - |
-        VALIDATE=`cat ./lint_result.json | jq 'select(.[].level=="error")`
+        VALIDATE=`cat ./lint_result.json | jq 'select(.[].level=="error")'`
         if [ -n "$VALIDATE" ]; then
           echo "There is an error in dockerfile."
           exit 1
