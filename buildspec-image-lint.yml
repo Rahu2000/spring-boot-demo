@@ -11,12 +11,13 @@ phases:
 
   pre_build:
     commands:
+      - yum install jq -y
       - |
         # Check existing linter
         LINTER=`hadolint --version 2>/dev/null`
         # Set linter version
         if [[ -z "$LINTER_VERSION" || "$LINTER_VERSION" == "\$LINTER_VERSION" ]]; then
-          LINTER_VERSION="v2.12.0"
+          LINTER_VERSION=$(curl -Is https://github.com/hadolint/hadolint/releases/latest | grep "^location" | sed 's#.*tag/##g' | tr -d "\r")
         fi
         if [ -z "$LINTER" ]; then
           wget -cO - https://github.com/hadolint/hadolint/releases/download/${LINTER_VERSION}/hadolint-Linux-x86_64 > hadolint
@@ -30,7 +31,7 @@ phases:
   post_build:
     commands:
       - |
-        VALIDATE=`cat ./lint_result.json | grep '[E|e]rror'`
+        VALIDATE=`cat ./lint_result.json | jq 'select(.[].level=="error")`
         if [ -n "$VALIDATE" ]; then
           echo "There is an error in dockerfile."
           exit 1
