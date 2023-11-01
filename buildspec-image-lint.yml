@@ -3,6 +3,7 @@ version: 0.2
 env:
   variables:
     LINTER_VERSION: $LINTER_VERSION
+    SLACK_INCOMING_WEBHOOK: $SLACK_INCOMING_WEBHOOK
 
 phases:
   install:
@@ -31,8 +32,18 @@ phases:
   post_build:
     commands:
       - |
-        VALIDATE=`cat ./lint_result.json | jq 'select(.[].level=="error")'`
+        VALIDATE=`cat ./lint_result.json | jq '.[] | select((.level=="error"))'`
+
         if [ -n "$VALIDATE" ]; then
           echo "There is an error in dockerfile."
+          echo "linter results:"
+          cat ./lint_result.json | jq .
+
+          if [[ -n "$SLACK_INCOMING_WEBHOOK" && "$SLACK_INCOMING_WEBHOOK" != "\$SLACK_INCOMING_WEBHOOK" ]]; then
+            # Send a message to a Slack channel
+            PAYLOAD=`cat ./lint_result.json | jq -Rs .`
+            curl -H 'Content-type: application/json' --data {\"text\":"${PAYLOAD}"} -X POST $SLACK_INCOMING_WEBHOOK
+          fi
+
           exit 1
         fi
