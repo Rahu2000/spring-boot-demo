@@ -26,7 +26,7 @@ phases:
 
   build:
     commands:
-      - ./hadolint ./Dockerfile -f json -c hadolint.yml > lint_result.json; EXITCODE=0
+      - ./hadolint ./Dockerfile -f json -c hadolint.yml --no-fail > lint_result.json
 
   post_build:
     commands:
