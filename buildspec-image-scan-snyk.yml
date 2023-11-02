@@ -1,0 +1,68 @@
+version: 0.2
+
+env:
+  variables:
+    SNYK_VERSION: $SNYK_VERSION
+    IMAGE_NAME: 'spring-boot-demo'
+    IGNORE_FAIL: $IGNORE_FAIL
+  parameter-store:
+    SNYK_TOKEN: "SNYK_TOKEN"
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+
+  pre_build:
+    commands:
+      - |
+        # Set SNYK version
+        if [[ -z "$SNYK_VERSION" || "$SNYK_VERSION" == "\$SNYK_VERSION" ]]; then
+          SNYK_VERSION='latest'
+        fi
+
+        # Install snky (standalone)
+        curl --compressed https://static.snyk.io/cli/${SNYK_VERSION}/snyk-linux -o snyk
+        chmod +x snyk
+
+        if [[ -z "$IGNORE_FAIL" || "$IGNORE_FAIL" == "\$IGNORE_FAIL" ]]; then
+          IGNORE_FAIL=true
+        fi
+
+  build:
+    commands:
+      - |
+        # Configure snyk authentication
+        ./snyk auth $SNYK_TOKEN
+      - |
+        echo SNYK Security Static Analysis started on `date`
+
+        echo Run snyk code test ...
+        # The snyk code test command finds security issues using Static Code Analysis.
+        ./snyk code test --severity-threshold=high --fail-on=all > snyk_code_test.txt; if "$IGNORE_FAIL"; then EXITCODE=0; fi;
+
+        echo Run snyk test ...
+        # Test a project for open-source vulnerabilities and license issues.
+        ./snyk test --severity-threshold=high --fail-on=all > snyk_test.txt; if "$IGNORE_FAIL"; then EXITCODE=0; fi;
+
+        echo SNYK Security Static Analysis completed on `date`
+      - |
+        echo Build a conatiner image
+        mvn -Dmaven.test.skip=true clean package
+        IMAGE_TAG=${CODEBUILD_BUILD_NUMBER}
+        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+      - |
+        echo SNYK Image Scan started on `date`
+
+        # Test container images for any known vulnerabilities.
+        ./snyk container test ${IMAGE_NAME}:${IMAGE_TAG} --severity-threshold=high --fail-on=all > snyk_container_test.txt; if "$IGNORE_FAIL"; then EXITCODE=0; fi;
+
+        echo SNYK Image Scan completed on `date`
+    finally:
+      - cat ./snyk_code_test.txt
+      - cat ./snyk_test.txt
+      - cat ./snyk_container_test.txt
+
+  post_build:
+    commands:
+      - # Verify Snyk results

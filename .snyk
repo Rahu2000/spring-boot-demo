@@ -1,0 +1,11 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+ignore:
+  SNYK-JAVA-ORGYAML-2806360:
+    - '*':
+        reason: No fix available
+        expires: 2023-12-31T00:00:00.000Z
+patch: {}
+exclude:
+  global:
+    - ./mvn
