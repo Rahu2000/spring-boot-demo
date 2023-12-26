@@ -21,7 +21,7 @@ phases:
           SNYK_VERSION='latest'
         fi
 
-        # Install snky (standalone)
+        # Install snyk (standalone)
         curl --compressed https://static.snyk.io/cli/${SNYK_VERSION}/snyk-linux -o snyk
         chmod +x snyk
 
@@ -47,7 +47,7 @@ phases:
 
         echo SNYK Security Static Analysis completed on `date`
       - |
-        echo Build a conatiner image
+        echo Build a container image
         mvn -Dmaven.test.skip=true clean package
         IMAGE_TAG=${CODEBUILD_BUILD_NUMBER}
         docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
