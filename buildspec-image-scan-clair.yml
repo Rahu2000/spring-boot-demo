@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  variables:
+    COMPOSE_VERSION: $COMPOSE_VERSION
+
+phases:
+
+  pre_build:
+    commands:
+      - curl -SL https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o ./docker-compose
+      - chmod +x ./docker-compose
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - curl -SL https://raw.githubusercontent.com/quay/clair/main/docker-compose.yaml -o ./docker-compose.yaml
+      - ./docker-compose --version
+      - ./docker-compose up
+      - echo Build completed on `date`
+
+  post_build:
+    commands:
+      - echo Code Static analysis started on `date`
+      - echo Code Static analysis completed on `date`
